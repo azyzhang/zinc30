@@ -40,7 +40,7 @@ public class LoginViewPage extends BaseActivityPage {
 }
 }}}
 
-可以看到，这个Page页面主要包括测试过程中需要操作的元素以及动作，其中元素查找有3个方法：
+可以看到，这个Page页面主要包括测试过程中需要操作的元素以及动作，其中元素查找有3种方法：
 
 1、根据id来查找，即自动生成的R文件中的id值；
 
@@ -79,6 +79,4 @@ Zinc30是全面支持PageFactory模式的（可以参考：[http://chon.techlimi
 
 3)能够在不同的test case中重用页面对象。
 
-对于某些操作不在WebDriver的API中，比如滑动屏幕、点击Listview中的某一行或者返回上一页等操作，我们在ActivityPage层直接zinc对象，它完全兼容Robotium的所有动作。
-
-
+对于某些操作不在WebDriver的API中，比如滑动屏幕、点击Listview中的某一行或者返回上一页等操作，我们在ActivityPage层直接操作zinc对象，它完全兼容Robotium的所有动作。
