@@ -1,0 +1,42 @@
+== 怎么开始？ ==
+
+请阅读GettingStart手册或者下载zinc30-sample.zip包，里面有较为细致的示例。
+
+== 支持哪些android版本？ ==
+
+Android1.6及以上。
+
+== 自动化测试用例能跨应用执行吗？ ==
+
+现在不支持，因为测试工程的AndroidManifest.xml有这么一段：
+<instrumentation android:name="android.test.InstrumentationTestRunner"
+android:targetPackage="com.baidu.zinc30.sample" />，限定了应用的可以作用的包名，后续版本想克服这个问题。
+
+== 怎么利用zinc30进行持续集成？==
+
+Android自带的Runner：android.test.InstrumentationTestRunner是不支持在case跑完后生成XML文件的，所以第一步需要替换掉这个Runner为com.baidu.zinc30.ZincIntrumentationTestRunner
+最好的修改方式为在测试工程的build.xml加入：
+
+{{{
+<property name="test.runner"        value="com.baidu.zinc30.ZincIntrumentationTestRunner" />
+}}}
+
+这样就不会对Eclipse的调试造成任何影响，否则在IDE中使用时还需要每次将AndroidManifest.xml改过来。另外还需要将用例执行结果从Android虚拟机或者真机中拿回本地，在build.xml再加入：
+
+{{{
+ <target name="pullJunitXml" >
+        <exec
+            dir="bin"
+            executable="${adb}"
+            failonerror="true" >
+
+            <arg line="${adb.device.arg}" />
+
+            <arg value="pull" />
+
+            <arg value="/data/data/com.baidu.zinc30.sample/files/" />
+        </exec>
+    </target>
+}}}
+
+最后是覆盖率的收集，现在android sdk默认采用emma收集覆盖率,只需要在测试工程下执行ant clean emma debug install test pullJunitXml，那么TEST.xml和coverage.xml将生成在测试工程的bin文件夹下。这样在hudson上配置一下，就能展现出case执行结果和覆盖率。
