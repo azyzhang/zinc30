@@ -1,0 +1,81 @@
+# GettingStart #
+
+使用Zinc30需要将zinc.jar包放入Android Test Project中并加入到build path之中，同时需要在AndroidManifest.xml的manifest元素下加入：
+<supports-screens android:anyDensity="true" />
+
+对于使用Zinc30的示例项目请在downloads区下载zinc30-sample.zip包，里面包含两个项目，zinc30-sample是被测项目，采用mvp模式书写；zinc30-sample-test是测试项目，采用PageFactory模式来书写测试用例。两个项目导入到eclipse即可直接运行。
+
+# 示例演示 #
+
+这里以测试登陆功能为例，假如有两个Activity，其中一个为LoginView，主要是登陆页面，另一个为MainView，主要是登陆成功后跳转的页面。这里也采用PageFactory模式来书写，先写ActivityPage：
+
+```
+public class LoginViewPage extends BaseActivityPage {
+
+	public LoginViewPage(Zinc zinc) {
+		super(zinc);
+	}
+
+	@FindBy(id = R.id.username)
+	private AndroidElement usernameEdit;
+
+	@FindBy(type = AndroidElementType.EditText, index = 1)
+	private AndroidElement passwordEdit;
+
+	@FindBy(type = AndroidElementType.Button, text = "登陆")
+	private AndroidElement loginButton;
+
+	public MainViewPage login(String username, String password) {
+		usernameEdit.clear();
+		usernameEdit.sendKeys(username);
+
+		passwordEdit.clear();
+		passwordEdit.sendKeys(password);
+
+		loginButton.click();
+		return new MainViewPage(zinc);
+	}
+
+}
+```
+
+可以看到，这个Page页面主要包括测试过程中需要操作的元素以及动作，其中元素查找有3种方法：
+
+1、根据id来查找，即自动生成的R文件中的id值；
+
+2、根据文本来查找，需要带上元素类型。比如@FindBy(type = AndroidElementType.Button, text = "登陆")为查找写有登陆文字的Button控件。如果元素类型不确定可以使用Unkown类型；
+
+3. 根据索引来查找，需要带上元素类型。比如@FindBy(type = AndroidElementType.EditText, index = 1)为查找第二个EditText控件。这里index以0标识第一个元素。
+
+接下来我们来看Test Case如何来书写，其实Test case主要组合已有的ActivityPage类：
+
+```
+public class LoginViewTest extends ZincTestCase<LoginView> {
+
+	public LoginViewTest() {
+		super("com.baidu.zinc30.sample", LoginView.class);
+	}
+
+	public void testLoginSuccess() {
+		LoginViewPage loginViewPage = new LoginViewPage(zinc);
+		MainViewPage mainViewPage = loginViewPage.login("zinc", "zinc");
+
+		Assert.assertTrue("should login success",
+				mainViewPage.isActivityPresent(MainView.class));
+	}
+}
+```
+
+我们写测试用例的时候需要继承ZincTestCase，它主要完成zinc对象的初始化。虽然在Test Case这层可以使用zinc对象，但我们鼓励将操作封装在ActivityPage层。
+
+# 总结 #
+
+Zinc30是全面支持PageFactory模式的（可以参考：http://chon.techliminal.com/page_object/#/intro），因为它有3方面的优点：
+
+1)减少重复代码，将页面状态的改变和迁移封装在页面对象之中；
+
+2)UI的变动只会影响到相应页面对象而不会影响到上层的test case；
+
+3)能够在不同的test case中重用页面对象。
+
+对于某些操作不在WebDriver的API中，比如滑动屏幕、点击Listview中的某一行或者返回上一页等操作，我们在ActivityPage层直接操作zinc对象，它完全兼容Robotium的所有动作。
